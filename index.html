@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OLO Dash — Web Controller | Micromaker Labs</title>
+  <meta name="description" content="OLO Dash Web Controller: Flash firmware and configure WiFi for your OLO Dash desk gadget. Part of the OLOVerse ecosystem by Micromaker Labs." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+
+  <style>
+    :root {
+      --bg: #070710;
+      --card: #10101e;
+      --border: #1e1e36;
+      --accent: #ff793f;
+      --accent2: #7b5ea7;
+      --green: #2ecc71;
+      --red: #e74c3c;
+      --text: #e8e8f5;
+      --text2: #7777a0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── Top bar ─── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7,7,16,.95);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .topbar-logo {
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--text2);
+      text-decoration: none;
+    }
+    .topbar-logo span { color: var(--accent); }
+    .topbar-links { display: flex; gap: 12px; align-items: center; }
+    .topbar-links a {
+      font-size: .8rem;
+      color: var(--text2);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all .2s;
+    }
+    .topbar-links a:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .btn-buy-sm {
+      background: linear-gradient(135deg, var(--accent), #ff5500);
+      color: #fff !important;
+      font-weight: 600 !important;
+      border-radius: 8px;
+      padding: 7px 14px !important;
+      font-size: .8rem !important;
+    }
+    .btn-buy-sm:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,121,63,.4); }
+
+    /* ─── Hero ─── */
+    .hero {
+      background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+      padding: 70px 24px 56px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,121,63,.18) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 80%, rgba(123,94,167,.15) 0%, transparent 50%);
+    }
+    .hero-inner { position: relative; max-width: 700px; margin: 0 auto; }
+    .hero-eyebrow {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .logo { font-size: 3.2rem; font-weight: 800; letter-spacing: 3px; margin-bottom: 8px; }
+    .logo span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .tagline { color: var(--text2); font-size: 1rem; margin-bottom: 28px; line-height: 1.6; }
+
+
+
+    .hero-cta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .btn-hero-buy {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #ff5500);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all .2s;
+      letter-spacing: .3px;
+    }
+    .btn-hero-buy:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(255,121,63,.45); }
+    .btn-hero-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.2);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-hero-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── Layout ─── */
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    /* ─── Tabs ─── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px;
+      margin-bottom: 28px;
+      overflow-x: auto;
+    }
+    .tab {
+      flex: 1;
+      padding: 11px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--text2);
+      text-align: center;
+      transition: all .2s;
+      white-space: nowrap;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(255,121,63,.3);
+    }
+    .tab:hover:not(.active) { background: rgba(255,255,255,.05); color: var(--text); }
+
+    .panel { display: none; animation: fadeIn .3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* ─── Cards ─── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .card-icon { font-size: 1.5rem; }
+    .card h3 { font-size: 1rem; font-weight: 700; letter-spacing: .5px; }
+    .card .sub { font-size: .85rem; color: var(--text2); margin-top: 2px; }
+
+    /* ─── Forms ─── */
+    .form-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .form-row label { font-size: .78rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+    input[type=text], input[type=password] {
+      background: #0a0a14;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: .95rem;
+      width: 100%;
+      font-family: inherit;
+      transition: border .2s, box-shadow .2s;
+    }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,121,63,.15); }
+    select {
+      background: #0a0a14;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: .95rem;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 26px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: .95rem;
+      font-weight: 600;
+      transition: all .2s;
+      font-family: inherit;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #ff5500);
+      color: #fff;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,121,63,.4); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger {
+      background: #e55039;
+      color: #fff;
+    }
+    .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(229,80,57,.4); }
+    .btn-sm { padding: 8px 18px; font-size: .85rem; }
+
+    /* ─── Serial Log ─── */
+    #serialLog {
+      background: #070710;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      height: 200px;
+      overflow-y: auto;
+      color: var(--green);
+      margin-top: 16px;
+    }
+    .log-line { margin-bottom: 4px; }
+    .log-line.recv { color: #67d7ff; }
+    .log-line.error { color: var(--red); }
+    .log-line.info { color: var(--text2); }
+
+    /* ─── Status badges ─── */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 600;
+    }
+    .status-pill.ok { background: rgba(46,204,113,.12); border: 1px solid rgba(46,204,113,.3); color: var(--green); }
+    .status-pill.idle { background: rgba(255,255,255,.05); border: 1px solid var(--border); color: var(--text2); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+    /* ─── Highlight box ─── */
+    .highlight {
+      background: rgba(255,121,63,.08);
+      border: 1px solid rgba(255,121,63,.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: .88rem;
+      line-height: 1.6;
+      color: var(--text2);
+    }
+    .highlight strong { color: var(--accent); }
+
+    /* ─── Step list ─── */
+    .steps { counter-reset: step; list-style: none; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .steps li::before {
+      content: counter(step);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      flex-shrink: 0;
+    }
+    .steps li .step-text { padding-top: 4px; line-height: 1.6; font-size: .92rem; }
+    .steps li .step-text strong { color: var(--accent); }
+
+    /* ─── OLOVerse ecosystem grid ─── */
+    .eco-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 4px;
+    }
+    .eco-card {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all .2s;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .eco-card:hover { border-color: var(--accent2); background: rgba(123,94,167,.07); transform: translateY(-2px); }
+    .eco-card-name { font-weight: 700; font-size: .9rem; margin-bottom: 4px; }
+    .eco-card-desc { font-size: .78rem; color: var(--text2); line-height: 1.5; }
+
+
+    /* ─── Toast ─── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--green);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      transform: translateY(80px);
+      transition: transform .3s;
+      z-index: 1000;
+    }
+    #toast.show { transform: translateY(0); }
+    #toast.error { background: var(--red); }
+
+    /* ─── Footer ─── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--text2);
+      font-size: .82rem;
+      line-height: 1.8;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      .logo { font-size: 2.4rem; }
+      .card { padding: 20px; }
+      .steps li { flex-direction: column; }
+      .topbar-links .hide-mobile { display: none; }
+      .eco-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Top bar ─────────────────────────────────────────────────────────────── -->
+<nav class="topbar">
+  <a class="topbar-logo" href="https://www.olobit.in/oloverse" target="_blank">
+    OLO<span>Verse</span> &nbsp;·&nbsp; Micromaker Labs
+  </a>
+  <div class="topbar-links">
+    <a href="https://www.micromakerlabs.com" target="_blank" class="hide-mobile">About Us</a>
+    <a href="https://www.olobit.in/product-page/olo-bit-plus" target="_blank" class="btn-buy-sm">🛒 Buy OLO Bit Plus</a>
+  </div>
+</nav>
+
+<!-- ─── Hero ─────────────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">OLOVerse Ecosystem</div>
+    <div class="logo">OLO <span>DASH</span></div>
+    <p class="tagline">Your daily finance & data desk companion.<br/>Real-time stocks, crypto, currency, weather and more — on a tiny OLED gadget.</p>
+
+    <div class="hero-cta">
+      <a href="https://www.olobit.in/product-page/olo-bit-plus" target="_blank" class="btn-hero-buy">🛒 Buy OLO Bit Plus</a>
+      <a href="https://www.olobit.in/oloverse" target="_blank" class="btn-hero-outline">🌌 Explore OLOVerse</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ─── Tabs ──────────────────────────────────────────────────────────── -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" onclick="showTab(0)" id="tab0" role="tab">⚡ Firmware</button>
+    <button class="tab" onclick="showTab(1)" id="tab1" role="tab">📡 WiFi Setup</button>
+    <button class="tab" onclick="showTab(2)" id="tab2" role="tab">📖 Guide</button>
+    <button class="tab" onclick="showTab(3)" id="tab3" role="tab">🌌 OLOVerse</button>
+  </div>
+
+  <!-- ─── TAB 0: FIRMWARE FLASHER ──────────────────────────────────────── -->
+  <div class="panel active" id="panel0">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">⚡</span>
+        <div>
+          <h3>Flash OLO Dash Firmware</h3>
+          <p class="sub">Connect your OLO Bit via USB and click Install</p>
+        </div>
+      </div>
+
+      <div class="highlight" style="margin-bottom: 20px;">
+        <strong>Before flashing:</strong> Select your OLED type. Most modules are SSD1306.
+        If you have a 1.3" or SH1106/SH1107 display, select SH110X.
+      </div>
+
+      <div class="form-row">
+        <label>OLED Display Controller</label>
+        <select id="oledType">
+          <option value="sh110x">SH110X — 1.3" OLED (SH1106/SH1107)</option>
+          <option value="ssd1306">SSD1306 — 0.96" OLED (most common)</option>
+        </select>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <esp-web-install-button id="installButton" manifest="./manifest_sh110x.json">
+          <button slot="activate" class="btn btn-primary" id="flashBtn">
+            ⚡ Install OLO Dash
+          </button>
+          <span slot="unsupported" style="color:var(--red)">
+            ⚠️ Your browser does not support Web Serial. Please use Chrome or Edge.
+          </span>
+        </esp-web-install-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TAB 1: WIFI SETUP ─────────────────────────────────────────────── -->
+  <div class="panel" id="panel1">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📡</span>
+        <div>
+          <h3>WiFi Configuration via Web Serial</h3>
+          <p class="sub">Send WiFi credentials to your OLO Dash over USB</p>
+        </div>
+      </div>
+
+      <div class="highlight" style="margin-bottom: 20px;">
+        <strong>Important:</strong> OLO Dash never creates a WiFi hotspot (AP mode).
+        Use this tool to securely send your WiFi credentials via USB cable.
+        Once connected, access <strong>olodash.local</strong> from your browser for full settings.
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <button class="btn btn-primary" id="connectSerialBtn" onclick="connectSerial()">
+          🔌 Connect via USB Serial
+        </button>
+        <span id="serialStatus" class="status-pill idle" style="margin-left: 12px;">
+          <span class="dot"></span> Not connected
+        </span>
+      </div>
+
+      <div id="wifiForm" style="display:none;">
+        <div class="form-row">
+          <label>WiFi Network Name (SSID)</label>
+          <input type="text" id="wifiSsid" placeholder="Your WiFi network name" />
+        </div>
+        <div class="form-row">
+          <label>WiFi Password</label>
+          <input type="password" id="wifiPass" placeholder="Your WiFi password" />
+        </div>
+        <button class="btn btn-primary" onclick="sendWifiCredentials()">
+          📶 Send to Device &amp; Reboot
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="pingDevice()" style="margin-left: 10px;">
+          Ping Device
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="sendCommand({cmd:'get_config'})" style="margin-left: 10px;">
+          Get Config
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="if(confirm('Wipe NVS memory and reset all settings? Device will reboot.')) sendCommand({cmd:'clear_nvs'})" style="margin-left: 10px;">
+          Clear NVS
+        </button>
+      </div>
+
+      <div id="serialLog"><div class="log-line info">Connect your device via USB to begin...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🌐</span>
+        <div>
+          <h3>After WiFi is Configured</h3>
+          <p class="sub">Access the full web dashboard</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li><div class="step-text">Ensure your phone/PC is on the same WiFi network as OLO Dash</div></li>
+        <li><div class="step-text">
+          Open your browser and navigate to <strong>http://olodash.local</strong> or click below:
+          <div style="margin-top: 10px;">
+            <a href="http://olodash.local" target="_blank" class="btn btn-primary btn-sm">🌐 Open olodash.local</a>
+          </div>
+        </div></li>
+        <li><div class="step-text">Configure screens, animations, API sources, stock symbols, crypto coins, and all device settings</div></li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- ─── TAB 2: GUIDE ──────────────────────────────────────────────────── -->
+  <div class="panel" id="panel2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🚀</span>
+        <div>
+          <h3>Quick Start Guide</h3>
+          <p class="sub">Get your OLO Dash up and running in minutes</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li><div class="step-text">
+          <strong>Get OLO Bit Plus</strong><br/>
+          Use the purchase link at the top of the page to get your OLO Bit Plus hardware. It comes pre-assembled and ready to flash.
+        </div></li>
+        <li><div class="step-text">
+          <strong>Flash Firmware</strong><br/>
+          Connect the OLO Bit Plus via USB-C, go to the <strong>Firmware</strong> tab, select your OLED type, and click Install.
+        </div></li>
+        <li><div class="step-text">
+          <strong>Configure WiFi</strong><br/>
+          Go to the <strong>WiFi Setup</strong> tab, click "Connect via USB Serial", enter your network credentials, and click "Send to Device". The device will reboot and connect.
+        </div></li>
+        <li><div class="step-text">
+          <strong>Access olodash.local</strong><br/>
+          On your phone or PC (same WiFi), open <strong>http://olodash.local</strong> for the full web dashboard with all settings — stocks, crypto, currency, weather, and more.
+          <div style="margin-top: 10px;">
+            <a href="http://olodash.local" target="_blank" class="btn btn-primary btn-sm">🌐 Open Web Dashboard</a>
+          </div>
+        </div></li>
+        <li><div class="step-text">
+          <strong>Enjoy!</strong><br/>
+          Single-tap to navigate screens, double-tap to open settings, triple-tap for the settings menu, long-press to return home.
+        </div></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">💡</span>
+        <div>
+          <h3>Feature Overview</h3>
+        </div>
+      </div>
+      <ul style="list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.88rem;">
+        <li>🌤 Weather (Open-Meteo)</li>
+        <li>💨 Air Quality Index</li>
+        <li>☀️ Daylight Times</li>
+        <li>📅 Holiday Calendar</li>
+        <li>📈 Stock Prices (Yahoo)</li>
+        <li>🪙 Crypto Prices (CoinLore)</li>
+        <li>💱 Currency Rates</li>
+        <li>🕰️ World Clock / Dual Time</li>
+        <li>😊 14 Face Animations</li>
+        <li>😴 Sleep Screensaver</li>
+        <li>🌐 olodash.local Web Panel</li>
+        <li>🔌 Web Serial Config</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🔧</span>
+        <div>
+          <h3>Troubleshooting</h3>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:.9rem;line-height:1.7;">
+        <div>
+          <strong style="color:var(--accent)">Device not flashing?</strong><br/>
+          Hold the BOOT button while plugging in USB. Use Chrome or Edge (Web Serial requires Chromium).
+        </div>
+        <div>
+          <strong style="color:var(--accent)">Display blank after flash?</strong><br/>
+          Check OLED type selection (SSD1306 vs SH110X). Re-flash with the correct type.
+        </div>
+        <div>
+          <strong style="color:var(--accent)">Can't find olodash.local?</strong><br/>
+          Ensure your device is on the same WiFi. Some routers block mDNS — use the IP address shown on the OLED directly.
+        </div>
+        <div>
+          <strong style="color:var(--accent)">WiFi credentials not working?</strong><br/>
+          Reconnect via USB Serial (WiFi Setup tab) and re-enter credentials. SSID and password are case-sensitive.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TAB 3: OLOVERSE ──────────────────────────────────────────────── -->
+  <div class="panel" id="panel3">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🧩</span>
+        <div>
+          <h3>OLOVerse Ecosystem</h3>
+          <p class="sub">7+ modular operating systems for OLO Bit hardware</p>
+        </div>
+      </div>
+      <p style="color:var(--text2);font-size:.9rem;line-height:1.6;margin-bottom:16px;">
+        OLOVerse is the modular OS ecosystem by <strong>Micromaker Labs</strong>. OLO Bit can be transformed into different functions by flashing different operating systems — from desk companions to IoT tools and productivity gadgets.
+      </p>
+      <div class="eco-grid">
+        <div class="eco-card">
+          <div class="eco-card-name">📊 OLO Dash</div>
+          <div class="eco-card-desc">Daily finance & data dashboard. Stocks, crypto, weather and more.</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-name">🕹️ OLOBit OS</div>
+          <div class="eco-card-desc">Flagship desk companion with retro games, watch faces, and BT notifications.</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-name">✈️ OLO Aero</div>
+          <div class="eco-card-desc">Real-time flight tracker for your desk.</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-name">🖱️ OLO Jiggler</div>
+          <div class="eco-card-desc">BLE mouse jiggler to keep your workstation active.</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-name">🎬 OLO Show</div>
+          <div class="eco-card-desc">Load custom 1-bit animations onto your OLED display.</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-name">✏️ OLO Glyph</div>
+          <div class="eco-card-desc">Offline desk companion on a custom ESP32-C3 PCB.</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-name">⌨️ OLO Keystrokes</div>
+          <div class="eco-card-desc">Keystroke injector system framework.</div>
+        </div>
+        <div class="eco-card">
+          <div class="eco-card-name">🐾 BOBO OS</div>
+          <div class="eco-card-desc">Configurable eyes desk pet with a daily tech control panel.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🏠</span>
+        <div>
+          <h3>About Micromaker Labs</h3>
+          <p class="sub">Thrissur, Kerala, India</p>
+        </div>
+      </div>
+      <p style="color:var(--text2);font-size:.92rem;line-height:1.8;margin-bottom:20px;">
+        Micromaker Labs offers interactive desk pets, smart gadgets, and workspace lighting solutions designed to help you enjoy technology with DIY. We build premium, open-source hardware for makers, developers and tech enthusiasts.
+      </p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="https://www.micromakerlabs.com" target="_blank" class="btn btn-outline btn-sm">🌐 Visit Website</a>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /container -->
+
+<!-- ─── Footer ──────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  <p>
+    <strong>OLO Dash</strong> — Part of the <a href="https://www.olobit.in/oloverse" target="_blank">OLOVerse</a> ecosystem<br/>
+    Made by <a href="https://www.micromakerlabs.com" target="_blank">Micromaker Labs</a> · Thrissur, Kerala, India
+  </p>
+</footer>
+
+<div id="toast"></div>
+
+<!-- ─── JavaScript ────────────────────────────────────────────────────────── -->
+<script>
+  // ─── Tab switching ──────────────────────────────────────────────────────────
+  function showTab(n) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n));
+    document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === n));
+  }
+
+  // ─── OLED type switch ───────────────────────────────────────────────────────
+  document.getElementById('oledType').addEventListener('change', function () {
+    const manifest = this.value === 'ssd1306' ? 'manifest_ssd1306.json' : 'manifest_sh110x.json';
+    document.getElementById('installButton').setAttribute('manifest', manifest);
+  });
+
+  // ─── Toast ──────────────────────────────────────────────────────────────────
+  function toast(msg, err = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show' + (err ? ' error' : '');
+    setTimeout(() => t.className = '', 3000);
+  }
+
+  // ─── Web Serial ─────────────────────────────────────────────────────────────
+  let port = null, writer = null, reader = null;
+
+  function logSerial(msg, type = '') {
+    const log = document.getElementById('serialLog');
+    const line = document.createElement('div');
+    line.className = 'log-line ' + type;
+    line.textContent = '> ' + msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function connectSerial() {
+    if (!('serial' in navigator)) {
+      toast('Web Serial not supported. Use Chrome or Edge.', true);
+      return;
+    }
+    try {
+      port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 115200 });
+
+      const btn = document.getElementById('connectSerialBtn');
+      btn.textContent = '✅ Connected';
+      btn.disabled = true;
+
+      document.getElementById('serialStatus').className = 'status-pill ok';
+      document.getElementById('serialStatus').innerHTML = '<span class="dot"></span> Connected';
+      document.getElementById('wifiForm').style.display = 'block';
+
+      logSerial('Serial port connected at 115200 baud.', 'info');
+
+      writer = port.writable.getWriter();
+      readSerial();
+
+      // Automatically sync PC time and timezone on connect
+      setTimeout(() => {
+        sendCommand({
+          cmd: 'set_time',
+          time: Math.floor(Date.now() / 1000),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        });
+      }, 1000);
+    } catch (e) {
+      logSerial('Connection failed: ' + e.message, 'error');
+      toast('Serial connect failed', true);
+    }
+  }
+
+  async function readSerial() {
+    reader = port.readable.getReader();
+    let buf = '';
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += new TextDecoder().decode(value);
+        let nl;
+        while ((nl = buf.indexOf('\n')) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (line) {
+            logSerial(line, 'recv');
+            try {
+              const obj = JSON.parse(line);
+              if (obj.type === 'pong') toast('Device is alive! ✓');
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      logSerial('Read error: ' + e.message, 'error');
+    }
+  }
+
+  async function pingDevice() {
+    await sendCommand({
+      cmd: 'set_time',
+      time: Math.floor(Date.now() / 1000),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+    await sendCommand({cmd:'ping'});
+  }
+
+  async function sendCommand(obj) {
+    if (!writer) { toast('Not connected via Serial', true); return; }
+    const json = JSON.stringify(obj) + '\n';
+    await writer.write(new TextEncoder().encode(json));
+    logSerial('Sent: ' + json.trim());
+  }
+
+  async function sendWifiCredentials() {
+    const ssid = document.getElementById('wifiSsid').value.trim();
+    const pass = document.getElementById('wifiPass').value;
+    if (!ssid) { toast('SSID is required', true); return; }
+    await sendCommand({ cmd: 'set_wifi', ssid, pass });
+    toast('WiFi credentials sent! Device is rebooting...');
+    logSerial('Device will reboot and attempt WiFi connection.', 'info');
+  }
+</script>
+</body>
+</html>

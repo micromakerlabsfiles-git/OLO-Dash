@@ -9,7 +9,7 @@ Welcome to the OLO Dash release! This folder contains precompiled binaries, web 
 You can flash the OLO Dash firmware directly from your web browser (Chrome or Edge) without installing any development tools.
 
 1. Connect your **ESP32-C3 SuperMini** to your PC using a USB-C data cable.
-2. Open the [**`USB Web Serial Contrller`**](https://micromakerlabsfiles-git.github.io/OLO-Dash/) file in this directory using Chrome or Edge.
+2. Open the [**`OLO Dash Web Controller`**](https://micromakerlabsfiles-git.github.io/OLO-Dash/) file in this directory using Chrome or Edge.
 3. Select your display controller environment from the dropdown menu:
    - **SSD1306** — For standard 0.96" OLED modules.
    - **SH110X** — For 1.3" OLED modules (SH1106 / SH1107).
@@ -23,7 +23,7 @@ You can flash the OLO Dash firmware directly from your web browser (Chrome or Ed
 
 Once flashed, configure WiFi credentials and synchronize time directly over the USB connection.
 
-1. On the same [**`USB Web Serial Contrller`**](https://micromakerlabsfiles-git.github.io/OLO-Dash/) web controller, go to the **WiFi Configuration** tab.
+1. On the same [**`OLO Dash Web Controller`**](https://micromakerlabsfiles-git.github.io/OLO-Dash/) web controller, go to the **WiFi Configuration** tab.
 2. Click **🔌 Connect via USB Serial** and select your device port.
 3. Upon connection, the page will **automatically synchronize your local PC time and timezone** to the device (crucial for accurate offline time display).
 4. Enter your home **WiFi Network Name (SSID)** and **WiFi Password**.
